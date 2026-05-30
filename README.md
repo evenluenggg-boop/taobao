@@ -29,6 +29,7 @@
 ├── .gitignore               # 忽略本地环境、业务数据、日志与 Python 缓存
 ├── README.md                # 项目总说明
 ├── config/                  # 非敏感配置模板与本地配置说明
+├── database/                # SQLite 基础数据库结构与说明
 ├── data/                    # 本地数据目录，不提交真实业务数据
 │   ├── raw/                 # 原始采集结果或后台导出文件
 │   ├── processed/           # 清洗、归一化后的中间数据
@@ -54,6 +55,7 @@
 | 路径 | 职责 |
 | --- | --- |
 | `config/` | 放置非敏感配置模板、字段映射说明、采集任务配置示例。真实密钥和账号信息应放在本地 `.env` 或安全的密钥管理系统中。 |
+| `database/` | 放置基础 SQLite 表结构、索引和数据库说明。 |
 | `data/raw/` | 存放原始采集文件或商家后台导出文件。该目录内容默认不提交，只保留 `.gitkeep`。 |
 | `data/processed/` | 存放清洗、去重、字段标准化后的中间结果。该目录内容默认不提交。 |
 | `data/exports/` | 存放最终给业务使用的 CSV、Excel、JSON 等导出文件。该目录内容默认不提交。 |
@@ -103,6 +105,7 @@ cp .env.example .env
 - 如果使用官方 API，把 App Key、App Secret、Access Token 等放到本地 `.env` 或安全密钥服务中。
 - 如果只整理公开字段，建议先在 `docs/` 中维护 5 个店铺链接和字段清单。
 - 可参考 `data/templates/` 中的虚构 CSV 模板确认字段格式，但不要把真实数据提交到模板目录。
+- 如需创建本地 SQLite 数据库，可运行 `PYTHONPATH=src python scripts/init_db.py`，数据库默认生成在已忽略的 `data/processed/` 目录。
 
 ### 4. 后续开发入口
 
@@ -111,6 +114,7 @@ cp .env.example .env
 - 新增数据模型：放在 `src/taobao_collector/models/`。
 - 新增清洗、同步、编排逻辑：放在 `src/taobao_collector/services/`。
 - 新增命令行或定时任务脚本：放在 `scripts/`。
+- 调整数据库结构：更新 `database/schema.sql`，并补充对应测试。
 
 ## 建议字段清单
 
@@ -168,6 +172,7 @@ pytest -q
 - [ ] 没有提交真实客户数据、客服个人隐私、聊天记录或敏感报表。
 - [ ] `data/raw/`、`data/processed/`、`data/exports/` 和 `logs/` 中只有 `.gitkeep` 被提交。
 - [ ] `data/templates/` 中仅包含虚构示例数据，不包含真实店铺或客服信息。
+- [ ] 没有提交本地生成的 SQLite 数据库文件。
 - [ ] 采集字段与数据来源已获得授权。
 - [ ] README 或 `docs/` 中记录了数据字段口径和数据来源。
 
