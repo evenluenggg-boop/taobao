@@ -1,0 +1,3 @@
+shop_name,product_id,product_title,aftersales_type,aftersales_reason,aftersales_time
+示例店铺A,DEMO-P-001,示例保温杯,退款,虚构示例：客户不喜欢颜色,2026-01-02 14:20
+示例店铺B,DEMO-P-002,示例收纳盒,换货,虚构示例：运输中外盒破损,2026-01-02 16:40

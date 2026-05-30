@@ -3,8 +3,8 @@ import sqlite3
 from taobao_collector.database import initialize_database
 
 
-def test_initialize_database_creates_expected_tables(tmp_path):
-    database_path = initialize_database(tmp_path / "taobao_collector.sqlite3")
+def test_initialize_database_creates_v1_tables(tmp_path):
+    database_path = initialize_database(tmp_path / "taobao_5shop.db")
 
     with sqlite3.connect(database_path) as connection:
         table_names = {
@@ -16,30 +16,29 @@ def test_initialize_database_creates_expected_tables(tmp_path):
 
     assert {
         "shops",
-        "customer_service_agents",
-        "shop_public_snapshots",
-        "customer_service_metrics",
-        "collection_jobs",
-        "collection_job_events",
+        "products",
+        "customer_questions",
+        "aftersales",
+        "daily_reports",
     }.issubset(table_names)
 
 
 def test_schema_enforces_shop_code_uniqueness(tmp_path):
-    database_path = initialize_database(tmp_path / "taobao_collector.sqlite3")
+    database_path = initialize_database(tmp_path / "taobao_5shop.db")
 
     with sqlite3.connect(database_path) as connection:
         connection.execute(
             """
-            INSERT INTO shops (shop_code, shop_name, shop_url)
-            VALUES ('SHOP_DEMO_001', '示例店铺A', 'https://example.com/taobao-shop-a')
+            INSERT INTO shops (shop_code, shop_name, platform)
+            VALUES ('SHOP_DEMO_001', '示例店铺A', 'taobao')
             """
         )
 
         try:
             connection.execute(
                 """
-                INSERT INTO shops (shop_code, shop_name, shop_url)
-                VALUES ('SHOP_DEMO_001', '示例店铺B', 'https://example.com/taobao-shop-b')
+                INSERT INTO shops (shop_code, shop_name, platform)
+                VALUES ('SHOP_DEMO_001', '示例店铺B', 'taobao')
                 """
             )
         except sqlite3.IntegrityError:

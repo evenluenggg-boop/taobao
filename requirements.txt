@@ -1,9 +1,7 @@
-# Runtime dependencies for taobao-collector.
-#
-# The project is currently a skeleton and does not require third-party
-# packages at runtime. Add collector/exporter dependencies here when the
-# corresponding implementation is introduced, for example:
-#
-# requests>=2.32.0
-# pandas>=2.2.0
-# openpyxl>=3.1.0
+fastapi
+uvicorn
+pandas
+openpyxl
+jinja2
+python-multipart
+xlrd

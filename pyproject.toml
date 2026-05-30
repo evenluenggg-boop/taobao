@@ -1,9 +1,17 @@
 [project]
 name = "taobao-collector"
 version = "0.1.0"
-description = "Project skeleton for authorized Taobao shop and customer-service data collection."
+description = "Local FastAPI system for importing authorized Taobao shop Excel/CSV data into SQLite."
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pandas",
+    "openpyxl",
+    "jinja2",
+    "python-multipart",
+    "xlrd",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

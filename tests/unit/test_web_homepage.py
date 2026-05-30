@@ -1,22 +1,32 @@
-from pathlib import Path
+import pytest
+
+pytest.importorskip("fastapi")
+
+from fastapi.testclient import TestClient
+
+from taobao_collector.app import app
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-HOME_PAGE = PROJECT_ROOT / "web" / "index.html"
+client = TestClient(app)
 
 
-def test_homepage_exists_and_has_required_sections():
-    html = HOME_PAGE.read_text(encoding="utf-8")
+def test_homepage_has_required_v1_entries():
+    response = client.get("/")
 
-    assert "Taobao Collector 本地后台" in html
-    assert "店铺接入状态" in html
-    assert "常用入口" in html
-    assert "SHOP_DEMO_001" in html
+    assert response.status_code == 200
+    assert "淘宝5店铺数据分析系统" in response.text
+    assert "上传数据" in response.text
+    assert "数据预览" in response.text
+    assert "店铺列表" in response.text
+    assert "商品问题库" in response.text
+    assert "运营日报" in response.text
 
 
-def test_homepage_uses_only_demo_data_markers():
-    html = HOME_PAGE.read_text(encoding="utf-8")
+def test_placeholder_pages_are_available():
+    product_response = client.get("/product-questions")
+    report_response = client.get("/daily-reports")
 
-    assert "示例占位数据" in html
-    assert "不包含真实店铺、客户或客服隐私数据" in html
-    assert "SHOP_DEMO_" in html
+    assert product_response.status_code == 200
+    assert report_response.status_code == 200
+    assert "V1 占位页面" in product_response.text
+    assert "V1 占位页面" in report_response.text

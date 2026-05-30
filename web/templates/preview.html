@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}数据预览 - {{ system_name }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header"><h2>数据预览：{{ table_label }}（前 50 行）</h2></div>
+  <div class="panel-body links">
+    {% for key, label in preview_tables.items() %}<a href="/preview?table={{ key }}">{{ label }}</a>{% endfor %}
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in rows %}<tr>{% for column in columns %}<td>{{ row[column] if row[column] is not none else '' }}</td>{% endfor %}</tr>{% endfor %}
+        {% if not rows %}<tr><td>暂无数据，请先上传导入。</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

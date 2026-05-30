@@ -1,46 +1,31 @@
 #!/usr/bin/env python3
-"""Serve the static local admin homepage."""
+"""Run the FastAPI local web backend."""
 
 from __future__ import annotations
 
 import argparse
-import functools
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import sys
 from pathlib import Path
 
+import uvicorn
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-WEB_ROOT = PROJECT_ROOT / "web"
-
-
-class AdminRequestHandler(SimpleHTTPRequestHandler):
-    """Serve the admin homepage at `/` while exposing static project templates."""
-
-    def do_GET(self) -> None:
-        if self.path in {"/", "/index.html"}:
-            self.path = "/web/index.html"
-        super().do_GET()
+SRC_ROOT = PROJECT_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve the taobao-collector local admin page.")
+    parser = argparse.ArgumentParser(description="Serve the Taobao 5-shop data analysis system.")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind. Defaults to 127.0.0.1.")
     parser.add_argument("--port", default=8000, type=int, help="Port to bind. Defaults to 8000.")
+    parser.add_argument("--reload", action="store_true", help="Enable uvicorn reload for local development.")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    handler = functools.partial(AdminRequestHandler, directory=str(PROJECT_ROOT))
-    server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"Serving local admin homepage at http://{args.host}:{args.port}/")
-    print(f"Static files are served from: {WEB_ROOT}")
-    print("Press Ctrl+C to stop.")
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nStopping local admin server.")
-    finally:
-        server.server_close()
+    uvicorn.run("taobao_collector.app:app", host=args.host, port=args.port, reload=args.reload)
 
 
 if __name__ == "__main__":

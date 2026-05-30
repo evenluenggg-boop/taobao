@@ -32,9 +32,11 @@ ENV/
 data/raw/*
 data/processed/*
 data/exports/*
+data/local/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/exports/.gitkeep
+!data/local/.gitkeep
 !data/templates/
 !data/templates/**
 
@@ -48,6 +50,7 @@ db.sqlite3
 db.sqlite3-journal
 *.sqlite
 *.sqlite3
+*.db
 *.csv
 *.xlsx
 *.xls

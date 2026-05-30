@@ -1,85 +1,46 @@
-# Taobao Collector
+# 淘宝5店铺数据分析系统
 
-面向 **5 个自有或已授权淘宝店铺** 的店铺数据、公开客服入口信息与授权后台导出数据整理项目。
+面向 **5 个自有或已授权淘宝店铺** 的本地 Excel / CSV 导入版 V1 系统。
 
-本项目当前是一个可扩展的 Python 项目骨架，目标是把后续的数据采集、数据清洗、数据导出、任务脚本和测试代码放在清晰、可维护的位置中。
+本阶段不接淘宝接口、不做爬虫、不做 AI 客服，目标只跑通：**上传 Excel/CSV → 字段清洗 → 写入 SQLite → 网页后台预览数据**。
 
-> 合规提醒：本项目只应处理你拥有或已获得授权的店铺数据。优先使用淘宝/天猫开放平台、千牛/商家后台导出文件或其他官方授权接口；不要绕过登录、验证码、风控、反爬机制，也不要把 Cookie、Token、账号密码、聊天隐私或客服个人敏感信息提交到仓库。
+> 合规提醒：本项目只应处理你拥有或已获得授权的店铺数据。不要提交 Cookie、Token、账号密码、客户聊天记录、真实订单/售后数据、客服个人隐私或任何未授权业务数据。
 
-## 适用场景
+## V1 已完成功能
 
-- 管理 5 个自有/授权淘宝店铺的数据采集需求。
-- 汇总店铺公开信息，例如店铺名称、店铺链接、公开评分、主营类目、公开客服入口名称等。
-- 整理千牛、商家后台或官方接口导出的客服接待与经营数据。
-- 将采集或导入的数据清洗后导出为 CSV、Excel、JSON 或后续数据库格式。
-- 为后续定时任务、命令行工具、Web 后台或自动化报表预留标准目录。
-
-## 不做的事情
-
-- 不抓取未授权的数据。
-- 不提交真实店铺数据、客户数据、客服个人隐私、聊天记录或敏感业务日志。
-- 不把 `.env`、Cookie、Access Token、App Secret 等凭证写入 Git。
-- 不实现绕过淘宝安全机制、验证码、登录风控或反爬限制的逻辑。
+- FastAPI + Jinja2 本地网页后台，可访问 `http://127.0.0.1:8000/`。
+- 首页显示系统名称：**淘宝5店铺数据分析系统**。
+- 首页包含入口：上传数据、数据预览、店铺列表、商品问题库、运营日报。
+- 支持上传客服咨询数据、商品数据、售后数据。
+- 支持 `.xlsx`、`.xls`、`.csv` 文件格式。
+- 上传文件保存到本地 `data/raw/`，该目录默认不提交。
+- 导入数据写入 SQLite，默认数据库路径为 `data/local/taobao_5shop.db`。
+- 数据预览页可查看 `customer_questions`、`products`、`aftersales` 前 50 行，并显示 `source_file`。
+- 商品问题库和运营日报已创建占位页面，完整分析留到下一阶段。
 
 ## 项目目录结构
 
 ```text
 .
 ├── .env.example             # 环境变量模板，只放示例值，不放真实凭证
-├── .gitignore               # 忽略本地环境、业务数据、日志与 Python 缓存
-├── README.md                # 项目总说明
+├── .gitignore               # 忽略本地环境、业务数据、日志、数据库与上传文件
 ├── config/                  # 非敏感配置模板与本地配置说明
-├── database/                # SQLite 基础数据库结构与说明
+├── database/                # SQLite 表结构与数据库说明
 ├── data/                    # 本地数据目录，不提交真实业务数据
-│   ├── raw/                 # 原始采集结果或后台导出文件
-│   ├── processed/           # 清洗、归一化后的中间数据
-│   ├── exports/             # 面向业务使用的 CSV/Excel/JSON 输出
-│   └── templates/           # 虚构示例数据模板，不存放真实业务数据
+│   ├── raw/                 # 上传的原始 Excel/CSV 文件，不提交
+│   ├── processed/           # 清洗后的中间数据，不提交
+│   ├── exports/             # 导出文件，不提交
+│   ├── local/               # 本地 SQLite 数据库，不提交
+│   └── templates/           # 虚构示例模板，可提交
 ├── docs/                    # 需求说明、字段字典、合规说明、接口文档
-├── logs/                    # 本地运行日志，不提交真实日志
-├── pyproject.toml           # Python 项目元数据与测试配置
-├── scripts/                 # 命令行脚本、定时任务入口、运维辅助脚本
-├── web/                     # 最简单的本地静态网页后台首页
-├── src/taobao_collector/    # 主应用源码包
-│   ├── collectors/          # 店铺公开页、官方 API、后台导出等采集适配器
-│   ├── exporters/           # CSV、Excel、JSON 等导出逻辑
-│   ├── models/              # 店铺、客服、商品、统计数据等领域模型
-│   ├── services/            # 业务编排、数据清洗、同步任务
-│   └── utils/               # 日志、时间、文件、校验等通用工具
-└── tests/                   # 自动化测试
-    ├── unit/                # 单元测试
-    └── integration/         # 集成测试
+├── logs/                    # 本地运行日志，不提交
+├── scripts/                 # 初始化数据库、启动后台等脚本
+├── src/taobao_collector/    # FastAPI 应用、导入逻辑、数据库工具
+├── tests/                   # 自动化测试
+└── web/                     # Jinja2 页面模板和静态提示页
 ```
 
-## 目录职责
-
-| 路径 | 职责 |
-| --- | --- |
-| `config/` | 放置非敏感配置模板、字段映射说明、采集任务配置示例。真实密钥和账号信息应放在本地 `.env` 或安全的密钥管理系统中。 |
-| `database/` | 放置基础 SQLite 表结构、索引和数据库说明。 |
-| `data/raw/` | 存放原始采集文件或商家后台导出文件。该目录内容默认不提交，只保留 `.gitkeep`。 |
-| `data/processed/` | 存放清洗、去重、字段标准化后的中间结果。该目录内容默认不提交。 |
-| `data/exports/` | 存放最终给业务使用的 CSV、Excel、JSON 等导出文件。该目录内容默认不提交。 |
-| `data/templates/` | 存放虚构示例数据模板，用于说明字段格式；不要放真实店铺、客户或客服数据。 |
-| `docs/` | 放置需求文档、字段字典、接口文档、合规说明和业务口径说明。 |
-| `logs/` | 存放本地运行日志。日志可能包含敏感上下文，默认不提交。 |
-| `scripts/` | 放置可执行脚本，例如一次性导入、定时采集入口、数据导出入口。 |
-| `web/` | 放置本地静态网页后台首页，不提交真实业务数据。 |
-| `src/taobao_collector/` | 放置核心 Python 包代码。 |
-| `tests/` | 放置单元测试和集成测试。 |
-
-## 数据来源建议
-
-优先级建议如下：
-
-1. **官方授权接口**：淘宝/天猫开放平台等官方 API，适合稳定、可审计的数据同步。
-2. **商家后台导出**：千牛或商家后台导出的 CSV/Excel，适合客服绩效、订单统计、经营报表等授权数据整理。
-3. **公开页面信息**：只采集店铺公开展示字段，例如店铺名、公开评分、公开客服入口名称等。
-4. **手工维护配置**：对无法稳定采集或不适合自动采集的字段，使用配置文件或后台表格维护。
-
-## 快速开始
-
-### 1. 准备 Python 环境
+## 安装依赖
 
 建议使用 Python 3.11 或更高版本。
 
@@ -91,96 +52,119 @@ python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-当前项目暂未引入运行时依赖，`requirements.txt` 目前仅保留依赖说明；后续添加采集、解析或导出功能时，再把依赖同步写入 `requirements.txt` 和 `pyproject.toml`。
+> `.xls` 读取依赖 `xlrd`；`.xlsx` 读取依赖 `openpyxl`；上传表单依赖 `python-multipart`。
 
-### 2. 创建本地环境变量文件
+## 启动本地网页后台
+
+方式一：使用项目脚本启动。
 
 ```bash
-cp .env.example .env
+python scripts/serve_admin.py
 ```
 
-然后根据你的授权方式在本地 `.env` 中填写配置。不要提交 `.env`。
+方式二：使用 uvicorn 启动。
 
-### 3. 准备数据输入
+```bash
+PYTHONPATH=src uvicorn taobao_collector.app:app --host 127.0.0.1 --port 8000
+```
 
-- 如果使用官方后台导出文件，把文件放到 `data/raw/`。
-- 如果使用官方 API，把 App Key、App Secret、Access Token 等放到本地 `.env` 或安全密钥服务中。
-- 如果只整理公开字段，建议先在 `docs/` 中维护 5 个店铺链接和字段清单。
-- 可参考 `data/templates/` 中的虚构 CSV 模板确认字段格式，但不要把真实数据提交到模板目录。
-- 如需创建本地 SQLite 数据库，可运行 `PYTHONPATH=src python scripts/init_db.py`，数据库默认生成在已忽略的 `data/processed/` 目录。
-- 如需查看本地网页后台首页，可运行 `python scripts/serve_admin.py` 后访问 `http://127.0.0.1:8000/`。
+启动后访问：<http://127.0.0.1:8000/>
 
-### 4. 后续开发入口
+## 初始化 SQLite 数据库
 
-- 新增采集器：放在 `src/taobao_collector/collectors/`。
-- 新增导出器：放在 `src/taobao_collector/exporters/`。
-- 新增数据模型：放在 `src/taobao_collector/models/`。
-- 新增清洗、同步、编排逻辑：放在 `src/taobao_collector/services/`。
-- 新增命令行或定时任务脚本：放在 `scripts/`。
-- 调整本地网页后台：首页静态文件放在 `web/`，启动脚本放在 `scripts/serve_admin.py`。
-- 调整数据库结构：更新 `database/schema.sql`，并补充对应测试。
+网页后台启动时会自动初始化数据库。也可以手动执行：
 
-## 建议字段清单
+```bash
+PYTHONPATH=src python scripts/init_db.py
+```
 
-### 店铺基础信息
+默认数据库路径：
 
-- 店铺名称
-- 店铺链接
-- 店铺 ID / Seller ID（仅在公开或授权返回时使用）
-- 主营类目
-- 公开评分
-- 商品数量
-- 店铺公告
-- 数据更新时间
+```text
+data/local/taobao_5shop.db
+```
 
-### 客服公开信息
+`data/local/` 已加入 `.gitignore`，数据库文件不能提交到 GitHub。
 
-- 公开客服入口名称
-- 公开旺旺/客服昵称
-- 公开在线状态（如果页面公开展示）
-- 客服入口链接（如果公开展示）
+## 上传 Excel / CSV
 
-### 授权后台数据
+1. 打开 <http://127.0.0.1:8000/upload>。
+2. 选择数据类型：
+   - 客服咨询数据
+   - 商品数据
+   - 售后数据
+3. 上传 `.xlsx`、`.xls` 或 `.csv` 文件。
+4. 系统会把原文件保存到 `data/raw/`。
+5. 系统读取字段、执行基础清洗、写入 SQLite。
+6. 打开 <http://127.0.0.1:8000/preview> 查看前 50 行导入结果。
 
-- 客服接待量
-- 平均响应时长
-- 首响时长
-- 转化相关统计
-- 售前/售后分类统计
-- 数据统计周期
+## 示例模板
 
-> 以上字段只是建议。涉及个人信息、聊天记录或员工绩效数据时，应先确认内部授权、最小化采集范围和数据留存策略。
+示例模板位于 `data/templates/`，只能使用虚构数据：
 
-## 开发约定
+- `customer_questions_template.csv`：客服咨询数据模板。
+- `products_template.csv`：商品数据模板。
+- `aftersales_template.csv`：售后数据模板。
 
-- 代码放在 `src/taobao_collector/`，测试放在 `tests/`。
-- 不把真实业务数据写入测试用例；测试数据应脱敏或构造。
-- 采集器应按数据来源拆分，避免把官方 API、后台导出和公开页面逻辑混在一起。
-- 导出器应只负责格式输出，字段标准化和业务口径应放在 `services/` 或 `models/` 中。
-- 新增功能时同时补充对应 README、字段说明或测试。
+模板字段支持英文标准字段，也支持部分中文字段映射，例如：
 
-## 测试
+| 中文字段 | 标准字段 |
+| --- | --- |
+| 店铺名称 | `shop_name` |
+| 商品ID | `product_id` |
+| 商品标题 | `product_title` |
+| SKU | `sku_name` |
+| 客户问题 | `customer_question` |
+| 问题时间 | `question_time` |
+| 客服名称 | `service_agent` |
+| 问题类型 | `question_type` |
+| 是否售后相关 | `is_after_sales` |
+| 是否影响成交 | `affects_conversion` |
+| 建议处理动作 | `suggested_action` |
+
+## 数据库表
+
+V1 创建以下数据表：
+
+- `shops`：店铺基础信息。
+- `products`：商品数据。
+- `customer_questions`：客服咨询数据。
+- `aftersales`：售后数据。
+- `daily_reports`：运营日报预留表。
+
+完整结构见 `database/schema.sql`。
+
+## 不能提交到 GitHub 的内容
+
+`.gitignore` 已覆盖以下内容：
+
+- `data/raw/`
+- `data/processed/`
+- `data/exports/`
+- `data/local/`
+- `*.xlsx`
+- `*.xls`
+- `*.csv`（只有 `data/templates/*.csv` 例外）
+- `.env`、`.env.*`（只有 `.env.example` 例外）
+- SQLite 数据库文件：`*.sqlite`、`*.sqlite3`、`*.db`
+- 真实客服数据、真实客户聊天记录、真实订单/售后数据
+
+提交前请确认仓库中只包含代码、文档、虚构模板和 `.gitkeep` 占位文件。
+
+## 测试和检查
 
 ```bash
 python -m compileall src
+python -m compileall scripts
 pytest -q
 ```
 
-当前仓库主要是项目骨架，测试目录已预留，后续实现业务逻辑后应补充单元测试和集成测试。
+如果依赖尚未安装，请先执行 `python -m pip install -r requirements.txt`。
 
-## 安全与合规清单
+## 下一阶段建议
 
-提交代码前请确认：
-
-- [ ] 没有提交 `.env`、Cookie、Token、账号密码或 App Secret。
-- [ ] 没有提交真实客户数据、客服个人隐私、聊天记录或敏感报表。
-- [ ] `data/raw/`、`data/processed/`、`data/exports/` 和 `logs/` 中只有 `.gitkeep` 被提交。
-- [ ] `data/templates/` 中仅包含虚构示例数据，不包含真实店铺或客服信息。
-- [ ] 没有提交本地生成的 SQLite 数据库文件。
-- [ ] 本地网页后台只展示示例、脱敏或已授权展示的数据。
-- [ ] 采集字段与数据来源已获得授权。
-- [ ] README 或 `docs/` 中记录了数据字段口径和数据来源。
-
-## 当前状态
-
-当前版本仅提供项目结构、配置模板和说明文档；尚未实现具体采集器、导出器、数据库或调度任务。下一步建议先确定 5 个店铺链接、字段清单、数据来源方式和目标输出格式。
+- 商品问题库：按商品、SKU、问题类型聚合高频问题。
+- 运营日报：根据 `customer_questions` 和 `aftersales` 自动生成每日汇总。
+- 导出功能：把预览和日报导出为 Excel。
+- 字段配置：将字段映射做成可配置文件。
+- 数据校验：增加更详细的行级错误报告和重复数据处理策略。

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="grid" aria-label="系统概览">
+  <article class="card"><strong>{{ stats.shops }}</strong><span class="muted">已识别店铺</span></article>
+  <article class="card"><strong>{{ stats.customer_questions }}</strong><span class="muted">客服咨询数据</span></article>
+  <article class="card"><strong>{{ stats.products }}</strong><span class="muted">商品数据</span></article>
+  <article class="card"><strong>{{ stats.aftersales }}</strong><span class="muted">售后数据</span></article>
+</section>
+<section class="panel">
+  <div class="panel-header"><h2>快速入口</h2></div>
+  <div class="panel-body links">
+    {% for label, href in nav_items %}<a href="{{ href }}">{{ label }}</a>{% endfor %}
+  </div>
+</section>
+<section class="panel">
+  <div class="panel-header"><h2>当前阶段说明</h2></div>
+  <div class="panel-body">
+    <p>本阶段不接淘宝接口、不做爬虫、不做 AI 客服，只跑通“导入数据 → 写入数据库 → 网页预览”。</p>
+    <p class="muted">请只上传虚构、脱敏或已授权的数据；上传文件会保存到已忽略的 <code>data/raw/</code> 目录。</p>
+  </div>
+</section>
+{% endblock %}

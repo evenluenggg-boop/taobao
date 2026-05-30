@@ -1,0 +1,3 @@
+shop_name,product_id,product_title,sku_name,customer_question,question_time,service_agent,question_type,is_after_sales,affects_conversion,suggested_action
+示例店铺A,DEMO-P-001,示例保温杯,白色 500ml,这个杯子可以放洗碗机吗,2026-01-01 09:30,客服示例A,商品使用,否,是,在详情页补充洗碗机使用说明
+示例店铺B,DEMO-P-002,示例收纳盒,三件套,尺寸适合放A4纸吗,2026-01-01 10:15,客服示例B,规格尺寸,否,是,增加尺寸对照图
