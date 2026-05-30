@@ -1,0 +1,10 @@
+[project]
+name = "taobao-collector"
+version = "0.1.0"
+description = "Project skeleton for authorized Taobao shop and customer-service data collection."
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

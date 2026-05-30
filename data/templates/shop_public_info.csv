@@ -1,0 +1,3 @@
+shop_code,shop_name,shop_url,seller_id,main_category,public_rating,item_count,announcement,customer_service_entry_name,wangwang_nickname,online_status,data_source,collected_at
+SHOP_DEMO_001,示例店铺A,https://example.com/taobao-shop-a,SELLER_DEMO_001,示例类目A,4.8,120,这里是虚构店铺公告,售前咨询,客服示例A,在线,manual_demo,2026-01-01T10:00:00Z
+SHOP_DEMO_002,示例店铺B,https://example.com/taobao-shop-b,SELLER_DEMO_002,示例类目B,4.7,85,这里是虚构店铺公告,售后服务,客服示例B,离线,manual_demo,2026-01-01T10:05:00Z
