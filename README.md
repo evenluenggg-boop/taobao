@@ -161,6 +161,10 @@ pytest -q
 
 如果依赖尚未安装，请先执行 `python -m pip install -r requirements.txt`。
 
+## 第二阶段说明
+
+第二阶段 V1 同步说明见 `docs/v1_excel_csv_import_backend.md`，其中包含本地启动、上传流程、数据库路径和不提交真实数据的目录清单。
+
 ## 下一阶段建议
 
 - 商品问题库：按商品、SKU、问题类型聚合高频问题。
