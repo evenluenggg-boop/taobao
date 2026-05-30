@@ -39,6 +39,7 @@
 ├── logs/                    # 本地运行日志，不提交真实日志
 ├── pyproject.toml           # Python 项目元数据与测试配置
 ├── scripts/                 # 命令行脚本、定时任务入口、运维辅助脚本
+├── web/                     # 最简单的本地静态网页后台首页
 ├── src/taobao_collector/    # 主应用源码包
 │   ├── collectors/          # 店铺公开页、官方 API、后台导出等采集适配器
 │   ├── exporters/           # CSV、Excel、JSON 等导出逻辑
@@ -63,6 +64,7 @@
 | `docs/` | 放置需求文档、字段字典、接口文档、合规说明和业务口径说明。 |
 | `logs/` | 存放本地运行日志。日志可能包含敏感上下文，默认不提交。 |
 | `scripts/` | 放置可执行脚本，例如一次性导入、定时采集入口、数据导出入口。 |
+| `web/` | 放置本地静态网页后台首页，不提交真实业务数据。 |
 | `src/taobao_collector/` | 放置核心 Python 包代码。 |
 | `tests/` | 放置单元测试和集成测试。 |
 
@@ -106,6 +108,7 @@ cp .env.example .env
 - 如果只整理公开字段，建议先在 `docs/` 中维护 5 个店铺链接和字段清单。
 - 可参考 `data/templates/` 中的虚构 CSV 模板确认字段格式，但不要把真实数据提交到模板目录。
 - 如需创建本地 SQLite 数据库，可运行 `PYTHONPATH=src python scripts/init_db.py`，数据库默认生成在已忽略的 `data/processed/` 目录。
+- 如需查看本地网页后台首页，可运行 `python scripts/serve_admin.py` 后访问 `http://127.0.0.1:8000/`。
 
 ### 4. 后续开发入口
 
@@ -114,6 +117,7 @@ cp .env.example .env
 - 新增数据模型：放在 `src/taobao_collector/models/`。
 - 新增清洗、同步、编排逻辑：放在 `src/taobao_collector/services/`。
 - 新增命令行或定时任务脚本：放在 `scripts/`。
+- 调整本地网页后台：首页静态文件放在 `web/`，启动脚本放在 `scripts/serve_admin.py`。
 - 调整数据库结构：更新 `database/schema.sql`，并补充对应测试。
 
 ## 建议字段清单
@@ -173,6 +177,7 @@ pytest -q
 - [ ] `data/raw/`、`data/processed/`、`data/exports/` 和 `logs/` 中只有 `.gitkeep` 被提交。
 - [ ] `data/templates/` 中仅包含虚构示例数据，不包含真实店铺或客服信息。
 - [ ] 没有提交本地生成的 SQLite 数据库文件。
+- [ ] 本地网页后台只展示示例、脱敏或已授权展示的数据。
 - [ ] 采集字段与数据来源已获得授权。
 - [ ] README 或 `docs/` 中记录了数据字段口径和数据来源。
 
