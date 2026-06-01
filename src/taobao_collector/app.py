@@ -60,12 +60,13 @@ def home(request: Request) -> HTMLResponse:
         "products": count_rows("products"),
         "aftersales": count_rows("aftersales"),
     }
-    return templates.TemplateResponse("home.html", context(request, stats=stats))
+    return templates.TemplateResponse(request, "home.html", context(request, stats=stats))
 
 
 @app.get("/upload", response_class=HTMLResponse)
 def upload_page(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
+        request,
         "upload.html",
         context(request, dataset_configs=DATASET_CONFIGS, result=None, error=None),
     )
@@ -94,6 +95,7 @@ async def upload_data(
         await file.close()
 
     return templates.TemplateResponse(
+        request,
         "upload.html",
         context(request, dataset_configs=DATASET_CONFIGS, result=result, error=error),
     )
@@ -106,6 +108,7 @@ def preview(request: Request, table: str = "customer_questions") -> HTMLResponse
     rows = fetch_rows(table, limit=50)
     columns = list(rows[0].keys()) if rows else []
     return templates.TemplateResponse(
+        request,
         "preview.html",
         context(
             request,
@@ -122,12 +125,13 @@ def preview(request: Request, table: str = "customer_questions") -> HTMLResponse
 def shops(request: Request) -> HTMLResponse:
     rows = fetch_rows("shops", limit=50)
     columns = list(rows[0].keys()) if rows else []
-    return templates.TemplateResponse("shops.html", context(request, rows=rows, columns=columns))
+    return templates.TemplateResponse(request, "shops.html", context(request, rows=rows, columns=columns))
 
 
 @app.get("/product-questions", response_class=HTMLResponse)
 def product_questions(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
+        request,
         "placeholder.html",
         context(
             request,
@@ -141,6 +145,7 @@ def product_questions(request: Request) -> HTMLResponse:
 def daily_reports(request: Request) -> HTMLResponse:
     rows = fetch_rows("daily_reports", limit=50)
     return templates.TemplateResponse(
+        request,
         "placeholder.html",
         context(
             request,
