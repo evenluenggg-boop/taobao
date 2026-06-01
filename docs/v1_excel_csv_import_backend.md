@@ -61,3 +61,21 @@ data/local/taobao_5shop.db
 - `*.sqlite`、`*.sqlite3`、`*.db`
 
 请勿提交真实业务数据、真实客服数据、真实客户聊天记录、真实订单数据或真实售后数据。
+
+## PR 收尾检查结果
+
+本 PR 收尾时已核对以下内容：
+
+- README 中的启动命令与实际脚本一致：`python scripts/serve_admin.py`。
+- README 中的 uvicorn 启动命令与 FastAPI 应用路径一致：`PYTHONPATH=src uvicorn taobao_collector.app:app --host 127.0.0.1 --port 8000`。
+- 默认数据库路径与代码一致：`data/local/taobao_5shop.db`。
+- 上传页面路径与代码一致：`/upload`。
+- 示例模板文件均存在：`customer_questions_template.csv`、`products_template.csv`、`aftersales_template.csv`。
+- `.gitignore` 已覆盖本地上传、导出、中间数据、本地数据库、Excel/CSV 上传文件、`.env` 文件和 SQLite/DB 文件。
+
+## 已知限制
+
+- 商品问题库和运营日报目前只是占位页面，暂未实现完整分析逻辑。
+- 当前系统只做本地导入和预览，不接淘宝开放平台接口，不做爬虫。
+- 当前基础测试会在缺少 FastAPI 或 pandas 的环境中跳过相关测试；安装 `requirements.txt` 后可运行完整测试。
+- `.xls` 文件读取依赖 `xlrd`，实际使用前需要确保依赖已安装。
