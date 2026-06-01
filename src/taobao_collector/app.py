@@ -23,6 +23,7 @@ app.mount(
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
 NAV_ITEMS = [
+    ("首页", "/"),
     ("上传数据", "/upload"),
     ("数据预览", "/preview"),
     ("店铺列表", "/shops"),
