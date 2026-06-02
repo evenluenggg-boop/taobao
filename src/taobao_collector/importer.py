@@ -394,6 +394,28 @@ def shop_code_from_name(shop_name: str) -> str:
     return f"SHOP_{safe}"[:64]
 
 
+
+def derive_single_shop_name_from_metrics(dataframe: pd.DataFrame) -> str | None:
+    """Infer one shop name from wangwang nick values in one metrics export file."""
+
+    if "wangwang_nick_raw" not in dataframe.columns:
+        return None
+
+    candidates: list[str] = []
+    for value in dataframe["wangwang_nick_raw"].tolist():
+        raw = clean_value(value)
+        if raw in {"???", "???"}:
+            continue
+        shop_name, _, _ = split_wangwang_nick(raw)
+        if shop_name:
+            candidates.append(shop_name)
+
+    unique_candidates = list(dict.fromkeys(candidates))
+    if len(unique_candidates) == 1:
+        return unique_candidates[0]
+    return None
+
+
 def ensure_shops(rows: list[dict[str, Any]]) -> None:
     """Upsert shops discovered in imported rows."""
 
@@ -428,8 +450,8 @@ def clean_customer_service_metric_row(row: dict[str, Any], source_file: str) -> 
 
     row["first_response_seconds"] = normalize_number(row.get("first_response_seconds"))
     row["avg_response_seconds"] = normalize_number(row.get("avg_response_seconds"))
-    row["consultation_count"] = normalize_int(row.get("consultation_count"))
-    row["unreplied_count"] = normalize_int(row.get("unreplied_count"))
+    row["consultation_count"] = normalize_int(row.get("consultation_count")) or 0
+    row["unreplied_count"] = normalize_int(row.get("unreplied_count")) or 0
     row["avg_service_duration"] = normalize_duration_seconds(row.get("avg_service_duration"))
     row["personal_sales_amount"] = normalize_price(row.get("personal_sales_amount"))
     row["sales_amount"] = normalize_price(row.get("sales_amount"))
@@ -460,6 +482,17 @@ def dataframe_to_rows(dataframe: pd.DataFrame, dataset_type: str, source_file: s
 
     config = DATASET_CONFIGS[dataset_type]
     normalized = normalize_columns(dataframe)
+
+    if dataset_type == "customer_service_metrics":
+        fallback_shop_name = derive_single_shop_name_from_metrics(normalized)
+        if fallback_shop_name:
+            if "shop_name" not in normalized.columns:
+                normalized["shop_name"] = fallback_shop_name
+            else:
+                normalized["shop_name"] = normalized["shop_name"].apply(
+                    lambda value: clean_value(value) or fallback_shop_name
+                )
+
     missing_fields = [field for field in config["required"] if field not in normalized.columns]
     result = ImportResult(dataset_type=dataset_type, source_file=source_file, saved_path=Path(source_file))
     result.missing_fields = missing_fields
