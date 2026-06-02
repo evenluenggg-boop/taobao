@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from taobao_collector.database import PROJECT_ROOT, count_rows, fetch_rows, initialize_database
+from taobao_collector.database import PROJECT_ROOT, count_rows, fetch_rows, get_connection, initialize_database
 from taobao_collector.importer import DATASET_CONFIGS, import_file, save_upload_file
 
 TEMPLATE_DIR = PROJECT_ROOT / "web" / "templates"
@@ -28,6 +28,7 @@ NAV_ITEMS = [
     ("数据预览", "/preview"),
     ("店铺列表", "/shops"),
     ("商品问题库", "/product-questions"),
+    ("客服绩效分析", "/analysis/service-metrics"),
     ("运营日报", "/daily-reports"),
 ]
 
@@ -35,6 +36,7 @@ PREVIEW_TABLES = {
     "customer_questions": "客服咨询数据",
     "products": "商品数据",
     "aftersales": "售后数据",
+    "customer_service_metrics": "客服绩效数据",
 }
 
 
@@ -53,6 +55,157 @@ def context(request: Request, **extra: object) -> dict[str, object]:
     return base
 
 
+
+
+def service_metrics_filter_options() -> dict[str, list[str]]:
+    """Return available filter values for service metrics analysis."""
+
+    with get_connection() as connection:
+        shop_names = [
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT DISTINCT shop_name
+                FROM customer_service_metrics
+                WHERE shop_name IS NOT NULL AND shop_name != ''
+                ORDER BY shop_name
+                """
+            ).fetchall()
+        ]
+        service_accounts = [
+            row[0]
+            for row in connection.execute(
+                """
+                SELECT DISTINCT service_account
+                FROM customer_service_metrics
+                WHERE service_account IS NOT NULL AND service_account != ''
+                ORDER BY service_account
+                """
+            ).fetchall()
+        ]
+    return {"shop_names": shop_names, "service_accounts": service_accounts}
+
+
+def service_metrics_analysis(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    shop_name: str | None = None,
+    service_account: str | None = None,
+) -> dict[str, object]:
+    """Build filtered summary and ranking tables for customer-service metrics."""
+
+    clauses: list[str] = []
+    params: list[object] = []
+    if start_date:
+        clauses.append("stat_date >= ?")
+        params.append(start_date)
+    if end_date:
+        clauses.append("stat_date <= ?")
+        params.append(end_date)
+    if shop_name:
+        clauses.append("shop_name = ?")
+        params.append(shop_name)
+    if service_account:
+        clauses.append("service_account = ?")
+        params.append(service_account)
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+    summary_sql = f"""
+        SELECT
+            COUNT(*) AS row_count,
+            COUNT(DISTINCT shop_name) AS shop_count,
+            COUNT(DISTINCT service_account) AS service_account_count,
+            COALESCE(SUM(consultation_count), 0) AS consultation_count,
+            COALESCE(SUM(unreplied_count), 0) AS unreplied_count,
+            ROUND(COALESCE(AVG(avg_response_seconds), 0), 2) AS avg_response_seconds,
+            ROUND(COALESCE(SUM(personal_sales_amount), 0), 2) AS personal_sales_amount,
+            ROUND(COALESCE(AVG(wangwang_reply_rate), 0), 2) AS wangwang_reply_rate,
+            ROUND(COALESCE(AVG(question_answer_ratio), 0), 2) AS question_answer_ratio
+        FROM customer_service_metrics
+        {where_sql}
+    """
+    detail_sql = f"""
+        SELECT stat_date, shop_name, service_account, service_agent,
+               first_response_seconds, avg_response_seconds, consultation_count,
+               unreplied_count, avg_service_duration, personal_sales_amount,
+               wangwang_reply_rate, question_answer_ratio
+        FROM customer_service_metrics
+        {where_sql}
+        ORDER BY stat_date DESC, shop_name, service_account
+        LIMIT 200
+    """
+    ranking_sql = {
+        "consultation_top10": (
+            "咨询人数 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, consultation_count AS metric_value
+            FROM customer_service_metrics
+            {where_sql}
+            ORDER BY consultation_count DESC, id DESC
+            LIMIT 10
+            """,
+        ),
+        "sales_top10": (
+            "个人日销售额 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, personal_sales_amount AS metric_value
+            FROM customer_service_metrics
+            {where_sql}
+            ORDER BY personal_sales_amount DESC, id DESC
+            LIMIT 10
+            """,
+        ),
+        "fast_response_top10": (
+            "平均响应最快 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, avg_response_seconds AS metric_value
+            FROM customer_service_metrics
+            {where_sql} {'AND' if where_sql else 'WHERE'} avg_response_seconds IS NOT NULL
+            ORDER BY avg_response_seconds ASC, id DESC
+            LIMIT 10
+            """,
+        ),
+        "unreplied_top10": (
+            "未回复人数最多 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, unreplied_count AS metric_value
+            FROM customer_service_metrics
+            {where_sql}
+            ORDER BY unreplied_count DESC, id DESC
+            LIMIT 10
+            """,
+        ),
+        "low_reply_rate_top10": (
+            "旺旺回复率最低 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, wangwang_reply_rate AS metric_value
+            FROM customer_service_metrics
+            {where_sql} {'AND' if where_sql else 'WHERE'} wangwang_reply_rate IS NOT NULL
+            ORDER BY wangwang_reply_rate ASC, id DESC
+            LIMIT 10
+            """,
+        ),
+        "qa_ratio_abnormal_top10": (
+            "答问比异常 TOP10",
+            f"""
+            SELECT stat_date, shop_name, service_account, service_agent, question_answer_ratio AS metric_value
+            FROM customer_service_metrics
+            {where_sql} {'AND' if where_sql else 'WHERE'} question_answer_ratio IS NOT NULL
+            ORDER BY ABS(question_answer_ratio - 1.0) DESC, id DESC
+            LIMIT 10
+            """,
+        ),
+    }
+
+    with get_connection() as connection:
+        summary = dict(connection.execute(summary_sql, params).fetchone())
+        details = [dict(row) for row in connection.execute(detail_sql, params).fetchall()]
+        rankings = {
+            key: {"title": title, "rows": [dict(row) for row in connection.execute(sql, params).fetchall()]}
+            for key, (title, sql) in ranking_sql.items()
+        }
+    return {"summary": summary, "details": details, "rankings": rankings}
+
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
     stats = {
@@ -60,6 +213,7 @@ def home(request: Request) -> HTMLResponse:
         "customer_questions": count_rows("customer_questions"),
         "products": count_rows("products"),
         "aftersales": count_rows("aftersales"),
+        "customer_service_metrics": count_rows("customer_service_metrics"),
     }
     return templates.TemplateResponse(request, "home.html", context(request, stats=stats))
 
@@ -141,6 +295,34 @@ def product_questions(request: Request) -> HTMLResponse:
         ),
     )
 
+
+
+
+@app.get("/analysis/service-metrics", response_class=HTMLResponse)
+def service_metrics_page(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    shop_name: str | None = None,
+    service_account: str | None = None,
+) -> HTMLResponse:
+    filters = {
+        "start_date": start_date or "",
+        "end_date": end_date or "",
+        "shop_name": shop_name or "",
+        "service_account": service_account or "",
+    }
+    return templates.TemplateResponse(
+        request,
+        "service_metrics.html",
+        context(
+            request,
+            title="5店铺客服绩效分析",
+            filters=filters,
+            filter_options=service_metrics_filter_options(),
+            analysis=service_metrics_analysis(start_date, end_date, shop_name, service_account),
+        ),
+    )
 
 @app.get("/daily-reports", response_class=HTMLResponse)
 def daily_reports(request: Request) -> HTMLResponse:

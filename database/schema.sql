@@ -52,6 +52,25 @@ CREATE TABLE IF NOT EXISTS aftersales (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE IF NOT EXISTS customer_service_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    stat_date TEXT NOT NULL,
+    shop_name TEXT NOT NULL,
+    service_account TEXT NOT NULL,
+    service_agent TEXT,
+    first_response_seconds REAL,
+    avg_response_seconds REAL,
+    consultation_count INTEGER NOT NULL DEFAULT 0,
+    unreplied_count INTEGER NOT NULL DEFAULT 0,
+    avg_service_duration REAL,
+    personal_sales_amount REAL,
+    wangwang_reply_rate REAL,
+    question_answer_ratio REAL,
+    source_file TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS daily_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     report_date TEXT NOT NULL,
@@ -72,3 +91,6 @@ CREATE INDEX IF NOT EXISTS idx_customer_questions_source_file ON customer_questi
 CREATE INDEX IF NOT EXISTS idx_aftersales_shop_name ON aftersales(shop_name);
 CREATE INDEX IF NOT EXISTS idx_aftersales_source_file ON aftersales(source_file);
 CREATE INDEX IF NOT EXISTS idx_daily_reports_report_date ON daily_reports(report_date);
+CREATE INDEX IF NOT EXISTS idx_customer_service_metrics_stat_date ON customer_service_metrics(stat_date);
+CREATE INDEX IF NOT EXISTS idx_customer_service_metrics_shop_name ON customer_service_metrics(shop_name);
+CREATE INDEX IF NOT EXISTS idx_customer_service_metrics_service_account ON customer_service_metrics(service_account);

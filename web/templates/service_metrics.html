@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - {{ system_name }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header"><h2>{{ title }}</h2></div>
+  <div class="panel-body">
+    <form action="/analysis/service-metrics" method="get">
+      <div class="form-grid">
+        <div>
+          <label for="start_date">开始日期</label>
+          <input id="start_date" name="start_date" type="date" value="{{ filters.start_date }}">
+        </div>
+        <div>
+          <label for="end_date">结束日期</label>
+          <input id="end_date" name="end_date" type="date" value="{{ filters.end_date }}">
+        </div>
+        <div>
+          <label for="shop_name">店铺筛选</label>
+          <select id="shop_name" name="shop_name">
+            <option value="">全部店铺</option>
+            {% for name in filter_options.shop_names %}<option value="{{ name }}" {% if filters.shop_name == name %}selected{% endif %}>{{ name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="service_account">客服账号筛选</label>
+          <select id="service_account" name="service_account">
+            <option value="">全部客服账号</option>
+            {% for account in filter_options.service_accounts %}<option value="{{ account }}" {% if filters.service_account == account %}selected{% endif %}>{{ account }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><button class="button" type="submit">筛选分析</button></div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="grid" aria-label="客服绩效汇总指标">
+  <article class="card"><strong>{{ analysis.summary.row_count }}</strong><span class="muted">数据行数</span></article>
+  <article class="card"><strong>{{ analysis.summary.shop_count }}</strong><span class="muted">覆盖店铺</span></article>
+  <article class="card"><strong>{{ analysis.summary.service_account_count }}</strong><span class="muted">客服账号</span></article>
+  <article class="card"><strong>{{ analysis.summary.consultation_count }}</strong><span class="muted">咨询人数</span></article>
+  <article class="card"><strong>{{ analysis.summary.unreplied_count }}</strong><span class="muted">未回复人数</span></article>
+  <article class="card"><strong>{{ analysis.summary.avg_response_seconds }}</strong><span class="muted">平均响应（秒）</span></article>
+  <article class="card"><strong>{{ analysis.summary.personal_sales_amount }}</strong><span class="muted">个人日销售额合计</span></article>
+  <article class="card"><strong>{{ analysis.summary.wangwang_reply_rate }}%</strong><span class="muted">平均旺旺回复率</span></article>
+  <article class="card"><strong>{{ analysis.summary.question_answer_ratio }}</strong><span class="muted">平均答问比</span></article>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><h2>客服明细表</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>店铺名称</th><th>客服账号</th><th>客服名称</th>
+          <th>首次响应（秒）</th><th>平均响应（秒）</th><th>咨询人数</th><th>未回复人数</th>
+          <th>平均服务时长（秒）</th><th>个人日销售额</th><th>旺旺回复率（%）</th><th>答问比</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in analysis.details %}
+          <tr>
+            <td>{{ row.stat_date }}</td><td>{{ row.shop_name }}</td><td>{{ row.service_account }}</td><td>{{ row.service_agent or '' }}</td>
+            <td>{{ row.first_response_seconds if row.first_response_seconds is not none else '' }}</td>
+            <td>{{ row.avg_response_seconds if row.avg_response_seconds is not none else '' }}</td>
+            <td>{{ row.consultation_count }}</td><td>{{ row.unreplied_count }}</td>
+            <td>{{ row.avg_service_duration if row.avg_service_duration is not none else '' }}</td>
+            <td>{{ row.personal_sales_amount if row.personal_sales_amount is not none else '' }}</td>
+            <td>{{ row.wangwang_reply_rate if row.wangwang_reply_rate is not none else '' }}</td>
+            <td>{{ row.question_answer_ratio if row.question_answer_ratio is not none else '' }}</td>
+          </tr>
+        {% endfor %}
+        {% if not analysis.details %}<tr><td colspan="12">暂无客服绩效数据，请先上传“客服绩效数据”。</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="grid" aria-label="客服绩效排行榜">
+  {% for ranking in analysis.rankings.values() %}
+    <article class="panel">
+      <div class="panel-header"><h2>{{ ranking.title }}</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>日期</th><th>店铺</th><th>客服账号</th><th>客服名称</th><th>指标值</th></tr></thead>
+          <tbody>
+            {% for row in ranking.rows %}
+              <tr><td>{{ row.stat_date }}</td><td>{{ row.shop_name }}</td><td>{{ row.service_account }}</td><td>{{ row.service_agent or '' }}</td><td>{{ row.metric_value if row.metric_value is not none else '' }}</td></tr>
+            {% endfor %}
+            {% if not ranking.rows %}<tr><td colspan="5">暂无数据</td></tr>{% endif %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  {% endfor %}
+</section>
+{% endblock %}

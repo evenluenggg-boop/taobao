@@ -63,11 +63,49 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
             "source_file",
         ],
     },
+    "customer_service_metrics": {
+        "label": "客服绩效数据",
+        "table": "customer_service_metrics",
+        "required": ["stat_date", "shop_name", "service_account"],
+        "columns": [
+            "stat_date",
+            "shop_name",
+            "service_account",
+            "service_agent",
+            "first_response_seconds",
+            "avg_response_seconds",
+            "consultation_count",
+            "unreplied_count",
+            "avg_service_duration",
+            "personal_sales_amount",
+            "wangwang_reply_rate",
+            "question_answer_ratio",
+            "source_file",
+        ],
+    },
 }
 
 COLUMN_ALIASES = {
     "店铺名称": "shop_name",
     "店铺": "shop_name",
+    "日期": "stat_date",
+    "数据日期": "stat_date",
+    "客服账号": "service_account",
+    "旺旺账号": "service_account",
+    "子账号": "service_account",
+    "首次响应（秒）": "first_response_seconds",
+    "首次响应秒数": "first_response_seconds",
+    "平均响应（秒）": "avg_response_seconds",
+    "平均响应秒数": "avg_response_seconds",
+    "咨询人数": "consultation_count",
+    "接待人数": "consultation_count",
+    "未回复人数": "unreplied_count",
+    "平均服务时长": "avg_service_duration",
+    "个人日销售额": "personal_sales_amount",
+    "个人销售额": "personal_sales_amount",
+    "旺旺回复率（%）": "wangwang_reply_rate",
+    "旺旺回复率": "wangwang_reply_rate",
+    "答问比": "question_answer_ratio",
     "商品ID": "product_id",
     "商品id": "product_id",
     "商品编号": "product_id",
@@ -162,6 +200,17 @@ def normalize_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
 
     normalized = dataframe.copy()
     normalized.columns = normalized_columns
+
+    if normalized.columns.duplicated().any():
+        merged = pd.DataFrame(index=normalized.index)
+        for column in dict.fromkeys(normalized_columns):
+            same_name_columns = normalized.loc[:, normalized.columns == column]
+            if same_name_columns.shape[1] == 1:
+                merged[column] = same_name_columns.iloc[:, 0]
+            else:
+                merged[column] = same_name_columns.bfill(axis=1).iloc[:, 0]
+        normalized = merged
+
     return normalized
 
 
@@ -190,15 +239,75 @@ def clean_value(value: Any) -> Any:
 
 
 def normalize_price(value: Any) -> float | None:
-    """Parse a price value if present."""
+    """Parse a price or currency amount value if present."""
 
     cleaned = clean_value(value)
     if cleaned is None:
         return None
     try:
-        return float(str(cleaned).replace(",", ""))
+        text = str(cleaned).replace(",", "").replace("￥", "").replace("¥", "").strip()
+        return float(text)
     except ValueError:
         return None
+
+
+def normalize_number(value: Any) -> float | None:
+    """Parse a generic numeric cell, including comma-separated values."""
+
+    cleaned = clean_value(value)
+    if cleaned is None:
+        return None
+    match = re.search(r"-?\d+(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?", str(cleaned))
+    if not match:
+        return None
+    try:
+        return float(match.group(0).replace(",", ""))
+    except ValueError:
+        return None
+
+
+def normalize_int(value: Any) -> int:
+    """Parse an integer metric, defaulting empty or invalid values to 0."""
+
+    number = normalize_number(value)
+    return int(number) if number is not None else 0
+
+
+def normalize_percentage(value: Any) -> float | None:
+    """Parse reply-rate percentages as 0-100 numbers."""
+
+    cleaned = clean_value(value)
+    if cleaned is None:
+        return None
+    number = normalize_number(cleaned)
+    if number is None:
+        return None
+    if "%" not in str(cleaned) and 0 <= number <= 1:
+        return round(number * 100, 4)
+    return number
+
+
+def normalize_duration_seconds(value: Any) -> float | None:
+    """Parse service durations like 00:08:35, 8分35秒, or 515秒 into seconds."""
+
+    cleaned = clean_value(value)
+    if cleaned is None:
+        return None
+    text = str(cleaned).strip()
+    if re.fullmatch(r"\d{1,2}:\d{1,2}:\d{1,2}", text):
+        hours, minutes, seconds = [int(part) for part in text.split(":")]
+        return float(hours * 3600 + minutes * 60 + seconds)
+    chinese_match = re.fullmatch(
+        r"(?:(?P<hours>\d+)\s*小时)?(?:(?P<minutes>\d+)\s*分)?(?:(?P<seconds>\d+)\s*秒)?",
+        text,
+    )
+    if chinese_match and any(chinese_match.groupdict().values()):
+        return float(
+            int(chinese_match.group("hours") or 0) * 3600
+            + int(chinese_match.group("minutes") or 0) * 60
+            + int(chinese_match.group("seconds") or 0)
+        )
+    return normalize_number(text)
 
 
 def shop_code_from_name(shop_name: str) -> str:
@@ -249,6 +358,16 @@ def dataframe_to_rows(dataframe: pd.DataFrame, dataset_type: str, source_file: s
             row["affects_conversion"] = normalize_bool(row.get("affects_conversion"))
         if dataset_type == "products":
             row["price"] = normalize_price(row.get("price"))
+
+        if dataset_type == "customer_service_metrics":
+            row["first_response_seconds"] = normalize_number(row.get("first_response_seconds"))
+            row["avg_response_seconds"] = normalize_number(row.get("avg_response_seconds"))
+            row["consultation_count"] = normalize_int(row.get("consultation_count"))
+            row["unreplied_count"] = normalize_int(row.get("unreplied_count"))
+            row["avg_service_duration"] = normalize_duration_seconds(row.get("avg_service_duration"))
+            row["personal_sales_amount"] = normalize_price(row.get("personal_sales_amount"))
+            row["wangwang_reply_rate"] = normalize_percentage(row.get("wangwang_reply_rate"))
+            row["question_answer_ratio"] = normalize_number(row.get("question_answer_ratio"))
 
         missing_required_value = [field for field in config["required"] if not row.get(field)]
         if missing_required_value:

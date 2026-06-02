@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 
 pytest.importorskip("fastapi")
 
@@ -30,3 +30,13 @@ def test_placeholder_pages_are_available():
     assert report_response.status_code == 200
     assert "V1 占位页面" in product_response.text
     assert "V1 占位页面" in report_response.text
+
+
+def test_service_metrics_analysis_page_is_available_for_empty_data():
+    response = client.get("/analysis/service-metrics")
+
+    assert response.status_code == 200
+    assert "5店铺客服绩效分析" in response.text
+    assert "客服明细表" in response.text
+    assert "咨询人数 TOP10" in response.text
+
