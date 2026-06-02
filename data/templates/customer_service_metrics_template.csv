@@ -1,0 +1,3 @@
+stat_date,shop_name,service_account,service_agent,first_response_seconds,avg_response_seconds,consultation_count,unreplied_count,avg_service_duration,personal_sales_amount,wangwang_reply_rate,question_answer_ratio
+2026-01-01,示例店铺A,ww_demo_a,客服示例A,12,38,42,1,00:08:35,"￥1,234.56",95%,1.35
+2026-01-01,示例店铺B,ww_demo_b,客服示例B,18,52,31,3,8分35秒,980.00,95.00,0.82

@@ -42,7 +42,14 @@ def get_connection(database_path: str | Path = DEFAULT_DATABASE_PATH) -> sqlite3
 def fetch_rows(table_name: str, limit: int = 50) -> list[dict[str, Any]]:
     """Fetch preview rows from a known table."""
 
-    allowed_tables = {"customer_questions", "products", "aftersales", "shops", "daily_reports"}
+    allowed_tables = {
+        "customer_questions",
+        "products",
+        "aftersales",
+        "shops",
+        "daily_reports",
+        "customer_service_metrics",
+    }
     if table_name not in allowed_tables:
         raise ValueError(f"Unsupported table: {table_name}")
 
@@ -56,7 +63,14 @@ def fetch_rows(table_name: str, limit: int = 50) -> list[dict[str, Any]]:
 def count_rows(table_name: str) -> int:
     """Count rows in a known table."""
 
-    allowed_tables = {"customer_questions", "products", "aftersales", "shops", "daily_reports"}
+    allowed_tables = {
+        "customer_questions",
+        "products",
+        "aftersales",
+        "shops",
+        "daily_reports",
+        "customer_service_metrics",
+    }
     if table_name not in allowed_tables:
         raise ValueError(f"Unsupported table: {table_name}")
 
