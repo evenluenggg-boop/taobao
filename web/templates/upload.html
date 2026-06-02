@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}上传数据 - {{ system_name }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header"><h2>上传 Excel / CSV</h2></div>
+  <div class="panel-body">
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    {% if result and result.success %}
+      <div class="alert ok">已导入 {{ result.inserted_rows }} 行；跳过 {{ result.skipped_rows }} 行；来源文件：{{ result.source_file }}</div>
+    {% endif %}
+    {% if result and result.warnings %}
+      <div class="alert error"><strong>行级提示：</strong><br>{% for warning in result.warnings[:10] %}{{ warning }}<br>{% endfor %}</div>
+    {% endif %}
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <div class="form-grid">
+        <div>
+          <label for="dataset_type">数据类型</label>
+          <select id="dataset_type" name="dataset_type" required>
+            {% for key, config in dataset_configs.items() %}<option value="{{ key }}">{{ config.label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="file">选择文件（.xlsx / .xls / .csv）</label>
+          <input id="file" name="file" type="file" accept=".xlsx,.xls,.csv" required>
+        </div>
+        <div><button class="button" type="submit">上传并导入</button></div>
+      </div>
+    </form>
+  </div>
+</section>
+<section class="panel">
+  <div class="panel-header"><h2>示例模板</h2></div>
+  <div class="panel-body links">
+    <a href="/data/templates/customer_questions_template.csv">客服咨询数据模板</a>
+    <a href="/data/templates/products_template.csv">商品数据模板</a>
+    <a href="/data/templates/aftersales_template.csv">售后数据模板</a>
+  </div>
+</section>
+{% endblock %}

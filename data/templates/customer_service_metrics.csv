@@ -1,0 +1,3 @@
+shop_code,stat_date,service_agent_alias,service_role,reception_count,avg_response_seconds,first_response_seconds,conversion_count,conversion_rate,after_sales_count,data_source
+SHOP_DEMO_001,2026-01-01,客服示例A,售前,42,38,15,8,0.1905,3,authorized_backend_demo
+SHOP_DEMO_002,2026-01-01,客服示例B,售后,31,52,21,4,0.1290,9,authorized_backend_demo

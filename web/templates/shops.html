@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}店铺列表 - {{ system_name }}{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header"><h2>店铺列表</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in rows %}<tr>{% for column in columns %}<td>{{ row[column] }}</td>{% endfor %}</tr>{% endfor %}
+        {% if not rows %}<tr><td>暂无店铺数据，导入数据后会自动识别店铺。</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
