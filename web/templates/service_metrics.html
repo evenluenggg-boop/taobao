@@ -39,11 +39,15 @@
   <article class="card"><strong>{{ analysis.summary.shop_count }}</strong><span class="muted">覆盖店铺</span></article>
   <article class="card"><strong>{{ analysis.summary.service_account_count }}</strong><span class="muted">客服账号</span></article>
   <article class="card"><strong>{{ analysis.summary.consultation_count }}</strong><span class="muted">咨询人数</span></article>
-  <article class="card"><strong>{{ analysis.summary.unreplied_count }}</strong><span class="muted">未回复人数</span></article>
-  <article class="card"><strong>{{ analysis.summary.avg_response_seconds }}</strong><span class="muted">平均响应（秒）</span></article>
-  <article class="card"><strong>{{ analysis.summary.personal_sales_amount }}</strong><span class="muted">个人日销售额合计</span></article>
-  <article class="card"><strong>{{ analysis.summary.wangwang_reply_rate }}%</strong><span class="muted">平均旺旺回复率</span></article>
-  <article class="card"><strong>{{ analysis.summary.question_answer_ratio }}</strong><span class="muted">平均答问比</span></article>
+  <article class="card"><strong>{{ analysis.summary.effective_reception_count }}</strong><span class="muted">有效接待人数</span></article>
+  <article class="card"><strong>{{ analysis.summary.order_buyer_count }}</strong><span class="muted">下单人数</span></article>
+  <article class="card"><strong>{{ analysis.summary.order_amount }}</strong><span class="muted">下单金额</span></article>
+  <article class="card"><strong>{{ analysis.summary.sales_buyer_count }}</strong><span class="muted">销售人数</span></article>
+  <article class="card"><strong>{{ analysis.summary.sales_amount }}</strong><span class="muted">销售额</span></article>
+  <article class="card"><strong>{{ analysis.summary.sales_quantity }}</strong><span class="muted">销售量</span></article>
+  <article class="card"><strong>{{ analysis.summary.order_count }}</strong><span class="muted">订单量</span></article>
+  <article class="card"><strong>{{ analysis.summary.refund_amount }}</strong><span class="muted">成功退款金额</span></article>
+  <article class="card"><strong>{{ analysis.summary.net_sales_amount }}</strong><span class="muted">净销售额</span></article>
 </section>
 
 <section class="panel">
@@ -52,25 +56,22 @@
     <table>
       <thead>
         <tr>
-          <th>日期</th><th>店铺名称</th><th>客服账号</th><th>客服名称</th>
-          <th>首次响应（秒）</th><th>平均响应（秒）</th><th>咨询人数</th><th>未回复人数</th>
-          <th>平均服务时长（秒）</th><th>个人日销售额</th><th>旺旺回复率（%）</th><th>答问比</th>
+          <th>日期</th><th>店铺名称</th><th>客服账号</th><th>客服名称</th><th>旺旺类型</th>
+          <th>咨询人数</th><th>有效接待人数</th><th>询单人数</th><th>下单人数</th><th>下单金额</th>
+          <th>销售人数</th><th>个人日销售额</th><th>销售额</th><th>销售量</th><th>订单量</th>
+          <th>个人销售额占比</th><th>成功退款金额</th><th>净销售额</th>
         </tr>
       </thead>
       <tbody>
         {% for row in analysis.details %}
           <tr>
-            <td>{{ row.stat_date }}</td><td>{{ row.shop_name }}</td><td>{{ row.service_account }}</td><td>{{ row.service_agent or '' }}</td>
-            <td>{{ row.first_response_seconds if row.first_response_seconds is not none else '' }}</td>
-            <td>{{ row.avg_response_seconds if row.avg_response_seconds is not none else '' }}</td>
-            <td>{{ row.consultation_count }}</td><td>{{ row.unreplied_count }}</td>
-            <td>{{ row.avg_service_duration if row.avg_service_duration is not none else '' }}</td>
-            <td>{{ row.personal_sales_amount if row.personal_sales_amount is not none else '' }}</td>
-            <td>{{ row.wangwang_reply_rate if row.wangwang_reply_rate is not none else '' }}</td>
-            <td>{{ row.question_answer_ratio if row.question_answer_ratio is not none else '' }}</td>
+            <td>{{ row.stat_date or '' }}</td><td>{{ row.shop_name or '' }}</td><td>{{ row.service_account or '' }}</td><td>{{ row.service_agent or '' }}</td><td>{{ row.wangwang_type or '' }}</td>
+            <td>{{ row.consultation_count if row.consultation_count is not none else '' }}</td><td>{{ row.effective_reception_count if row.effective_reception_count is not none else '' }}</td><td>{{ row.inquiry_count if row.inquiry_count is not none else '' }}</td><td>{{ row.order_buyer_count if row.order_buyer_count is not none else '' }}</td><td>{{ row.order_amount if row.order_amount is not none else '' }}</td>
+            <td>{{ row.sales_buyer_count if row.sales_buyer_count is not none else '' }}</td><td>{{ row.personal_sales_amount if row.personal_sales_amount is not none else '' }}</td><td>{{ row.sales_amount if row.sales_amount is not none else '' }}</td><td>{{ row.sales_quantity if row.sales_quantity is not none else '' }}</td><td>{{ row.order_count if row.order_count is not none else '' }}</td>
+            <td>{{ row.personal_sales_ratio if row.personal_sales_ratio is not none else '' }}</td><td>{{ row.refund_amount if row.refund_amount is not none else '' }}</td><td>{{ row.net_sales_amount if row.net_sales_amount is not none else '' }}</td>
           </tr>
         {% endfor %}
-        {% if not analysis.details %}<tr><td colspan="12">暂无客服绩效数据，请先上传“客服绩效数据”。</td></tr>{% endif %}
+        {% if not analysis.details %}<tr><td colspan="18">暂无客服绩效数据，请先上传“客服绩效数据”。</td></tr>{% endif %}
       </tbody>
     </table>
   </div>
@@ -82,12 +83,12 @@
       <div class="panel-header"><h2>{{ ranking.title }}</h2></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>日期</th><th>店铺</th><th>客服账号</th><th>客服名称</th><th>指标值</th></tr></thead>
+          <thead><tr><th>日期</th><th>店铺</th><th>客服账号</th><th>客服名称</th><th>旺旺类型</th><th>指标值</th></tr></thead>
           <tbody>
             {% for row in ranking.rows %}
-              <tr><td>{{ row.stat_date }}</td><td>{{ row.shop_name }}</td><td>{{ row.service_account }}</td><td>{{ row.service_agent or '' }}</td><td>{{ row.metric_value if row.metric_value is not none else '' }}</td></tr>
+              <tr><td>{{ row.stat_date or '' }}</td><td>{{ row.shop_name or '' }}</td><td>{{ row.service_account or '' }}</td><td>{{ row.service_agent or '' }}</td><td>{{ row.wangwang_type or '' }}</td><td>{{ row.metric_value if row.metric_value is not none else '' }}</td></tr>
             {% endfor %}
-            {% if not ranking.rows %}<tr><td colspan="5">暂无数据</td></tr>{% endif %}
+            {% if not ranking.rows %}<tr><td colspan="6">暂无数据</td></tr>{% endif %}
           </tbody>
         </table>
       </div>

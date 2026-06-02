@@ -52,21 +52,33 @@ CREATE TABLE IF NOT EXISTS aftersales (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
 CREATE TABLE IF NOT EXISTS customer_service_metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    stat_date TEXT NOT NULL,
-    shop_name TEXT NOT NULL,
-    service_account TEXT NOT NULL,
+    stat_date TEXT,
+    shop_name TEXT,
+    service_account TEXT,
     service_agent TEXT,
+    wangwang_nick_raw TEXT,
     first_response_seconds REAL,
     avg_response_seconds REAL,
-    consultation_count INTEGER NOT NULL DEFAULT 0,
-    unreplied_count INTEGER NOT NULL DEFAULT 0,
+    consultation_count INTEGER,
+    unreplied_count INTEGER,
     avg_service_duration REAL,
     personal_sales_amount REAL,
     wangwang_reply_rate REAL,
     question_answer_ratio REAL,
+    effective_reception_count INTEGER,
+    inquiry_count INTEGER,
+    order_buyer_count INTEGER,
+    order_amount REAL,
+    sales_buyer_count INTEGER,
+    sales_amount REAL,
+    sales_quantity INTEGER,
+    order_count INTEGER,
+    personal_sales_ratio REAL,
+    refund_amount REAL,
+    net_sales_amount REAL,
+    wangwang_type TEXT,
     source_file TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

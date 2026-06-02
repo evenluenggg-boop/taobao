@@ -55,8 +55,6 @@ def context(request: Request, **extra: object) -> dict[str, object]:
     return base
 
 
-
-
 def service_metrics_filter_options() -> dict[str, list[str]]:
     """Return available filter values for service metrics analysis."""
 
@@ -116,95 +114,57 @@ def service_metrics_analysis(
             COUNT(DISTINCT shop_name) AS shop_count,
             COUNT(DISTINCT service_account) AS service_account_count,
             COALESCE(SUM(consultation_count), 0) AS consultation_count,
-            COALESCE(SUM(unreplied_count), 0) AS unreplied_count,
-            ROUND(COALESCE(AVG(avg_response_seconds), 0), 2) AS avg_response_seconds,
-            ROUND(COALESCE(SUM(personal_sales_amount), 0), 2) AS personal_sales_amount,
-            ROUND(COALESCE(AVG(wangwang_reply_rate), 0), 2) AS wangwang_reply_rate,
-            ROUND(COALESCE(AVG(question_answer_ratio), 0), 2) AS question_answer_ratio
+            COALESCE(SUM(effective_reception_count), 0) AS effective_reception_count,
+            COALESCE(SUM(order_buyer_count), 0) AS order_buyer_count,
+            ROUND(COALESCE(SUM(order_amount), 0), 2) AS order_amount,
+            COALESCE(SUM(sales_buyer_count), 0) AS sales_buyer_count,
+            ROUND(COALESCE(SUM(sales_amount), 0), 2) AS sales_amount,
+            COALESCE(SUM(sales_quantity), 0) AS sales_quantity,
+            COALESCE(SUM(order_count), 0) AS order_count,
+            ROUND(COALESCE(SUM(refund_amount), 0), 2) AS refund_amount,
+            ROUND(COALESCE(SUM(net_sales_amount), 0), 2) AS net_sales_amount
         FROM customer_service_metrics
         {where_sql}
     """
     detail_sql = f"""
-        SELECT stat_date, shop_name, service_account, service_agent,
-               first_response_seconds, avg_response_seconds, consultation_count,
-               unreplied_count, avg_service_duration, personal_sales_amount,
-               wangwang_reply_rate, question_answer_ratio
+        SELECT stat_date, shop_name, service_account, service_agent, wangwang_type,
+               consultation_count, effective_reception_count, inquiry_count,
+               order_buyer_count, order_amount, sales_buyer_count,
+               personal_sales_amount, sales_amount, sales_quantity, order_count,
+               personal_sales_ratio, refund_amount, net_sales_amount
         FROM customer_service_metrics
         {where_sql}
         ORDER BY stat_date DESC, shop_name, service_account
         LIMIT 200
     """
     ranking_sql = {
-        "consultation_top10": (
-            "咨询人数 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, consultation_count AS metric_value
-            FROM customer_service_metrics
-            {where_sql}
-            ORDER BY consultation_count DESC, id DESC
-            LIMIT 10
-            """,
-        ),
-        "sales_top10": (
-            "个人日销售额 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, personal_sales_amount AS metric_value
-            FROM customer_service_metrics
-            {where_sql}
-            ORDER BY personal_sales_amount DESC, id DESC
-            LIMIT 10
-            """,
-        ),
-        "fast_response_top10": (
-            "平均响应最快 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, avg_response_seconds AS metric_value
-            FROM customer_service_metrics
-            {where_sql} {'AND' if where_sql else 'WHERE'} avg_response_seconds IS NOT NULL
-            ORDER BY avg_response_seconds ASC, id DESC
-            LIMIT 10
-            """,
-        ),
-        "unreplied_top10": (
-            "未回复人数最多 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, unreplied_count AS metric_value
-            FROM customer_service_metrics
-            {where_sql}
-            ORDER BY unreplied_count DESC, id DESC
-            LIMIT 10
-            """,
-        ),
-        "low_reply_rate_top10": (
-            "旺旺回复率最低 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, wangwang_reply_rate AS metric_value
-            FROM customer_service_metrics
-            {where_sql} {'AND' if where_sql else 'WHERE'} wangwang_reply_rate IS NOT NULL
-            ORDER BY wangwang_reply_rate ASC, id DESC
-            LIMIT 10
-            """,
-        ),
-        "qa_ratio_abnormal_top10": (
-            "答问比异常 TOP10",
-            f"""
-            SELECT stat_date, shop_name, service_account, service_agent, question_answer_ratio AS metric_value
-            FROM customer_service_metrics
-            {where_sql} {'AND' if where_sql else 'WHERE'} question_answer_ratio IS NOT NULL
-            ORDER BY ABS(question_answer_ratio - 1.0) DESC, id DESC
-            LIMIT 10
-            """,
-        ),
+        "sales_top10": ("销售额 TOP10", "sales_amount", "DESC"),
+        "net_sales_top10": ("净销售额 TOP10", "net_sales_amount", "DESC"),
+        "order_top10": ("订单量 TOP10", "order_count", "DESC"),
+        "effective_reception_top10": ("有效接待人数 TOP10", "effective_reception_count", "DESC"),
+        "refund_top10": ("退款金额 TOP10", "refund_amount", "DESC"),
+        "consultation_top10": ("咨询人数 TOP10", "consultation_count", "DESC"),
     }
 
     with get_connection() as connection:
         summary = dict(connection.execute(summary_sql, params).fetchone())
         details = [dict(row) for row in connection.execute(detail_sql, params).fetchall()]
-        rankings = {
-            key: {"title": title, "rows": [dict(row) for row in connection.execute(sql, params).fetchall()]}
-            for key, (title, sql) in ranking_sql.items()
-        }
+        rankings = {}
+        for key, (title, metric_column, direction) in ranking_sql.items():
+            sql = f"""
+                SELECT stat_date, shop_name, service_account, service_agent,
+                       wangwang_type, {metric_column} AS metric_value
+                FROM customer_service_metrics
+                {where_sql} {'AND' if where_sql else 'WHERE'} {metric_column} IS NOT NULL
+                ORDER BY {metric_column} {direction}, id DESC
+                LIMIT 10
+            """
+            rankings[key] = {
+                "title": title,
+                "rows": [dict(row) for row in connection.execute(sql, params).fetchall()],
+            }
     return {"summary": summary, "details": details, "rankings": rankings}
+
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> HTMLResponse:
@@ -296,8 +256,6 @@ def product_questions(request: Request) -> HTMLResponse:
     )
 
 
-
-
 @app.get("/analysis/service-metrics", response_class=HTMLResponse)
 def service_metrics_page(
     request: Request,
@@ -323,6 +281,7 @@ def service_metrics_page(
             analysis=service_metrics_analysis(start_date, end_date, shop_name, service_account),
         ),
     )
+
 
 @app.get("/daily-reports", response_class=HTMLResponse)
 def daily_reports(request: Request) -> HTMLResponse:

@@ -10,6 +10,47 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SCHEMA_PATH = PROJECT_ROOT / "database" / "schema.sql"
 DEFAULT_DATABASE_PATH = PROJECT_ROOT / "data" / "local" / "taobao_5shop.db"
 
+CUSTOMER_SERVICE_METRICS_OPTIONAL_COLUMNS = {
+    "wangwang_nick_raw": "TEXT",
+    "effective_reception_count": "INTEGER",
+    "inquiry_count": "INTEGER",
+    "order_buyer_count": "INTEGER",
+    "order_amount": "REAL",
+    "sales_buyer_count": "INTEGER",
+    "sales_amount": "REAL",
+    "sales_quantity": "INTEGER",
+    "order_count": "INTEGER",
+    "personal_sales_ratio": "REAL",
+    "refund_amount": "REAL",
+    "net_sales_amount": "REAL",
+    "wangwang_type": "TEXT",
+}
+
+ALLOWED_TABLES = {
+    "customer_questions",
+    "products",
+    "aftersales",
+    "shops",
+    "daily_reports",
+    "customer_service_metrics",
+}
+
+
+def ensure_optional_columns(
+    connection: sqlite3.Connection,
+    table_name: str,
+    optional_columns: dict[str, str],
+) -> None:
+    """Add optional columns to existing local SQLite tables when upgrading schema."""
+
+    existing_columns = {
+        row[1]
+        for row in connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    }
+    for column_name, column_type in optional_columns.items():
+        if column_name not in existing_columns:
+            connection.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+
 
 def initialize_database(
     database_path: str | Path = DEFAULT_DATABASE_PATH,
@@ -25,6 +66,11 @@ def initialize_database(
     with sqlite3.connect(database_path) as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.executescript(schema_sql)
+        ensure_optional_columns(
+            connection,
+            "customer_service_metrics",
+            CUSTOMER_SERVICE_METRICS_OPTIONAL_COLUMNS,
+        )
 
     return database_path
 
@@ -42,15 +88,7 @@ def get_connection(database_path: str | Path = DEFAULT_DATABASE_PATH) -> sqlite3
 def fetch_rows(table_name: str, limit: int = 50) -> list[dict[str, Any]]:
     """Fetch preview rows from a known table."""
 
-    allowed_tables = {
-        "customer_questions",
-        "products",
-        "aftersales",
-        "shops",
-        "daily_reports",
-        "customer_service_metrics",
-    }
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_TABLES:
         raise ValueError(f"Unsupported table: {table_name}")
 
     with get_connection() as connection:
@@ -63,15 +101,7 @@ def fetch_rows(table_name: str, limit: int = 50) -> list[dict[str, Any]]:
 def count_rows(table_name: str) -> int:
     """Count rows in a known table."""
 
-    allowed_tables = {
-        "customer_questions",
-        "products",
-        "aftersales",
-        "shops",
-        "daily_reports",
-        "customer_service_metrics",
-    }
-    if table_name not in allowed_tables:
+    if table_name not in ALLOWED_TABLES:
         raise ValueError(f"Unsupported table: {table_name}")
 
     with get_connection() as connection:
